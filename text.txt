@@ -305,8 +305,8 @@ endmodule
 ------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------
 
-//top module program block for mesh based systolic array:
 
+//top module program block for mesh based systolic array:
 module top(cs,clk,rst,in1,in2,in3,in4,y);
 input [7:0]in1,in2,in3,in4;
 input cs,clk,rst;
@@ -489,4 +489,77 @@ always @(yi or c)//bs2
 		bs2<={3'b000,yi[7:3]};
 		
 		end
+		
+always@(c or b)//m1 mux and inbilut nand gate
+	begin
+	if(c==2'b00)
+	z <= ~(b[0] & b[1]);
+	else if(c==2'b01)
+	z <= ~(b[2] & b[3]);
+	else if(c==2'b11)
+	z <= ~(b[4] & b[5]);
+	end
 	
+	always @(bs1 or z)//m3 mux
+	begin
+	if(z) 
+	m3 = bs1>>1;
+	else
+	m3 = bs1;
+	end
+
+always @(bs2 or z)//m2 mux
+begin
+	if(z) 
+	m2=bs2>>1;
+	else
+	m2=bs2;
+	end
+
+	always @(m2 or x0 or z) //a2 adder 
+	  begin  
+		 if (z==1'b0)
+		 x1 = (m2+x0);		 //
+		 else           
+		 x1 = (m2-x0);
+	 end  
+	assign x2=x1>>1;  
+	always @(m3 or y0 or z)  
+	  begin  
+		 if (z==1'b0) y1 = m3+y0;  //a1 adder
+		 else           y1 = m3-y0;  
+		end
+		
+always @(x2 or y1 or b[6])//m4 mux
+	begin
+		if(b[6]) 
+		out=(x2+y1);
+		else
+		out = y1;
+	end
+	
+always @( out or pre_out)begin 
+
+y <= out + pre_out;
+end
+
+endmodule
+
+----------------------------------------------------------------------------
+//counter module program:
+
+module counter(input clk, rst, output reg[1:0]c);
+always @ (posedge clk)begin
+if(!rst)
+c<=2'b00;
+else if
+(c==2'b00)
+c<=c+1;
+else if(c==2'b01)
+c<=c+2;
+else if(c==2'b11)
+c<=2'b00;
+end
+endmodule
+
+
