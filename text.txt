@@ -1,5 +1,312 @@
 
+//ring based systolic array architecture verilog program
+
+module topmodule(clk,rst,cs,in11,in12,in13,in21,in22,in23,in31,in32,in33,y11,y12,y13,y21,y22,y23,y31,y32,y33);
+	 input clk,rst,cs;
+	 
+input [7:0]in11,in12,in13,in21,in22,in23,in31,in32,in33;
+parameter b11 = 8'b00010101;
+parameter b12 = 8'b10010101;
+parameter b13 = 8'b00010101;
+parameter b21 = 8'b11010101;
+parameter b22 = 8'b00010101;
+parameter b23 = 8'b01010101;
+parameter b31 = 8'b10010101;
+parameter b32 = 8'b00010101;
+parameter b33 = 8'b00110101;
+wire [7:0]out11,out12,out13,out21,out22,out23,out31,out32,out33,m1,m2,m3,m4,m5,m6,m7,m8,m9,d10,d11,d20,d21,d31,d30,d40,d41,d50,d51,d60,d61,d70,d71,d80,d81,d90,d91;
+output reg [7:0]y11,y12,y13,y21,y22,y23,y31,y32,y33;
+	
+mux x1 (cs,d91,d30,m1);
+	 
+processing_element pe1 (clk,rst,in11,b11,m1,out11);
+	  always @(out11)begin
+		y11=out11;
+	  end
+demux y1 (cs,y11,d11,d10);
+    
+	 
+	 mux x2 (cs,d71,d10,m2);
+ 	 
+	 processing_element pe2 (clk,rst,in12,b12,m2,out12);
+	 always @(out12)begin
+	  y12=out12;end
+	 demux y2 (cs,y12,d21,d20);
+	 
+	 mux x3 (cs,d81,d20,m3);
+	 
+	 processing_element pe3 (clk,rst,in13,b13,m3,out13);
+	 always @(out13)begin
+	  y13=out13;end
+	 demux y3 (cs,y13,d31,d30);
+	 
+	 mux x4 (cs,d31,d60,m4);
+	
+	 processing_element pe4 (clk,rst,in21,b21,m4,out21);
+	 always @(out21)begin
+	  y21=out21;end
+	 demux y4 (cs,y21,d41,d40);
+	 
+	 mux x5 (cs,d11,d40,m5);
+	 
+	 processing_element pe5 (clk,rst,in22,b22,m5,out22);
+	 always @(out22)begin
+	  y22=out22;end
+	 demux y5 (cs,y22,d51,d50);
+	 
+	 mux x6 (cs,d21,d50,m6);
+	 
+	 processing_element pe6 (clk,rst,in23,b23,m6,out23);
+	 always @(out23)begin
+	  y23=out23;end
+	 demux y6 (cs,y23,d61,d60);
+	 
+	 mux x7 (cs,d61,d90,m7);
+	 
+	 processing_element pe7 (clk,rst,in31,b31,m7,out31);
+	 always @(out31)begin
+	  y31=out31;end
+	 demux y7 (cs,y31,d71,d70);
+	 
+	 mux x8 (cs,d61,d70,m8);
+	 
+	 processing_element pe8 (clk,rst,in32,b32,m8,out32);
+	 always @(out32)begin
+	  y32=out32;end
+	 demux y8 (cs,y32,d81,d80);
+	 
+	 mux x9 (cs,d51,d80,m9);
+	 
+	 processing_element pe9 (clk,rst,in33,b33,m9,out33);
+	 always @(out33)begin
+	  y33=out33;end
+	 demux y9 (cs,y33,d91,d90);
+
+endmodule
+
+--------------------------------------------------
+
+//mux fuction call program:
+
+module mux(cs,d2,d3,m);
+input cs;
+
+input [7:0]d2,d3;
+output reg [7:0]m;
+initial begin
+m=0;
+end
+always @( cs or d2 or d3)
+	 begin
+ if(cs == 1)
+	 m=d2;
+else 
+	 m=d3;
+	 end
+	 
+endmodule
+
+----------------------------------------------------------------------------------
+
+//single processing element program:
+
+module processing_element(clk,rst,in,b,pre_out,out);//
+
+input [7:0]in,pre_out,b;
+input clk,rst;
+wire [1:0]c;
+wire out1;
+wire [4:0]z0;
+wire [7:0]x0,y0,x2;
+reg z;
+reg [7:0]m3,bs1,bs2,m2,m5,ite_out,x1,y1,fifo_buf,xi,yi;
+output reg[7:0]out;
+
+ assign x0=(b[7])?0:in;//m7
+ assign y0=(b[7])?(~in+1):0;//m6
+
+ always @(posedge clk)begin
+ if(!rst)begin
+ xi <=0;
+ yi <=0;
+end
+ 
+ else if(c==0)begin
+ xi <= x0; 
+ yi <= y0;
+end 
+ else if(c==2'b01 || c==2'b11)begin
+ xi <=x1;
+ yi <=y1;
+ end
+ end
+counter c0(clk,rst,c);//counter module calling
+
+always @(xi or c)//bs1
+	begin
+		if (c==2'b00)
+			bs1=xi;
+		else if(c==2'b01)
+			bs1={1'b0,xi[7:1]};
+			else if(c==2'b11)
+			bs1={3'b000,xi[7:3]};
+			end
+			
+always @(yi or c)//bs2
+  begin
+	if (c==2'b00 || c==2'b10)
+		bs2<=yi;
+	else if(c==2'b01)
+		bs2<={1'b0,yi[7:1]};
+		else if(c==2'b11)
+		bs2<={3'b000,yi[7:3]};
+		
+		end
+		
+always@(c or b)//m1 mux and inbilut nand gate
+	begin
+	if(c==2'b00)
+	z <= ~(b[0] & b[1]);
+	else if(c==2'b01)
+	z <= ~(b[2] & b[3]);
+	else if(c==2'b11)
+	z <= ~(b[4] & b[5]);
+	end
+	
+	always @(bs1 or z)//m3 mux
+	begin
+	if(z) 
+	m3=bs1>>1;
+	else
+	m3=bs1;
+	end
+
+always @(bs2 or z)//m2 mux
+begin
+	if(z) 
+	m2=bs2>>1;
+	else
+	m2=bs2;
+	end
+
+	always @(m2 or x0 or z) //a2 adder 
+	  begin  
+		 if (z==1'b0)
+		 x1 = (m2+x0);		 //
+		 else           
+		 x1 = (m2-x0);
+	 end  
+	assign x2=x1>>1;  
+	always @(m3 or y0 or z)  
+	  begin  
+		 if (z==1'b0) y1 = m3+y0;  //a1 adder
+		 else           y1 = m3-y0;  
+		end
+		
+always @(x2 or y1 or b[6])//m4 mux
+	begin
+		if(b[6]) 
+		ite_out=(x2+y1);
+		else
+		ite_out = y1;
+	end
+	
+	
+	mod27c c1(clk,rst,z0,out1);//mod 27 counter
+	
+	always @(posedge clk)//m5 mux
+	begin
+		if(out1) 
+		m5 <=fifo_buf;
+		else
+		m5 <= pre_out;
+	end
+	
+	always @(m5 or ite_out)begin
+	if(c==2'b11)begin
+	out <= m5+ite_out;//a3 adder
+	end
+	else 
+	out <= 0;
+	end
+	always @(posedge clk)begin
+	fifo_buf=out;
+	end
+endmodule
+
+
+--------------------------------------------------------------------------------
+  
+//counter program:
+
+module counter(input clk, rst, output reg[1:0]c);
+always @ (posedge clk)begin
+if(!rst)
+c<=2'b00;
+else if
+(c==2'b00)
+c<=c+1;
+else if(c==2'b01)
+c<=c+2;
+else if(c==2'b11)
+c<=2'b00;
+end
+endmodule
+
+
+--------------------------------------------------------------------------------
+
+//mod27 counter program:
+
+module mod27c 
+#(parameter N = 27,
+parameter WIDTH=5) 
+(input  clk,
+input rst,
+output reg [WIDTH-1:0]z0,
+output reg out1);
+  always @ (posedge clk) begin 
+  
+    if (!rst) begin 
+		z0 <= 0;	 
+      out1 <= 1'b0;end 
+	else begin
+		if (z0 == N-1)begin
+				out1 <= 1'b1;
+				z0 <= 0;	end
+		else begin
+			  z0 <= z0 + 1; 
+				out1 <= 1'b0; end	  end
+				
+	end
+	endmodule
+
+
+------------------------------------------------------------------------------------
+
+//demux program:
+
+module demux(cs,y,d1,d0);
+input cs;
+input [7:0]y;
+output reg [7:0]d0,d1;
+always @(cs or y)//d1 demux
+	 begin
+	 if (cs)begin
+	 d1=y;
+	 end
+	 else begin
+	 d0=y;
+	 end
+	end
+endmodule
+
+
+------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------
+
 //top module program block for mesh based systolic array:
+
 module top(cs,clk,rst,in1,in2,in3,in4,y);
 input [7:0]in1,in2,in3,in4;
 input cs,clk,rst;
@@ -182,77 +489,4 @@ always @(yi or c)//bs2
 		bs2<={3'b000,yi[7:3]};
 		
 		end
-		
-always@(c or b)//m1 mux and inbilut nand gate
-	begin
-	if(c==2'b00)
-	z <= ~(b[0] & b[1]);
-	else if(c==2'b01)
-	z <= ~(b[2] & b[3]);
-	else if(c==2'b11)
-	z <= ~(b[4] & b[5]);
-	end
 	
-	always @(bs1 or z)//m3 mux
-	begin
-	if(z) 
-	m3 = bs1>>1;
-	else
-	m3 = bs1;
-	end
-
-always @(bs2 or z)//m2 mux
-begin
-	if(z) 
-	m2=bs2>>1;
-	else
-	m2=bs2;
-	end
-
-	always @(m2 or x0 or z) //a2 adder 
-	  begin  
-		 if (z==1'b0)
-		 x1 = (m2+x0);		 //
-		 else           
-		 x1 = (m2-x0);
-	 end  
-	assign x2=x1>>1;  
-	always @(m3 or y0 or z)  
-	  begin  
-		 if (z==1'b0) y1 = m3+y0;  //a1 adder
-		 else           y1 = m3-y0;  
-		end
-		
-always @(x2 or y1 or b[6])//m4 mux
-	begin
-		if(b[6]) 
-		out=(x2+y1);
-		else
-		out = y1;
-	end
-	
-always @( out or pre_out)begin 
-
-y <= out + pre_out;
-end
-
-endmodule
-
-----------------------------------------------------------------------------
-//counter module program:
-
-module counter(input clk, rst, output reg[1:0]c);
-always @ (posedge clk)begin
-if(!rst)
-c<=2'b00;
-else if
-(c==2'b00)
-c<=c+1;
-else if(c==2'b01)
-c<=c+2;
-else if(c==2'b11)
-c<=2'b00;
-end
-endmodule
-
-
